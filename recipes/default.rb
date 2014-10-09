@@ -34,15 +34,19 @@ install_from_release('jruby') do
   not_if       { File.exists?(prefix) }
 end
 
+
+jruby_options = node[:jruby][:opts]
+
+profile_content = "PATH=\$PATH:" + File.join(prefix, "bin")
+profile_content += "\nexport JRUBY_OPTS=\"#{jruby_options.to_s}\"\n" if jruby_options != ''
+
 file "/etc/profile.d/jruby.sh" do
   mode "0644"
-  content "PATH=\$PATH:" + File.join(prefix, "bin")
+  content profile_content
   action :create_if_missing
 end
 
-if node[:jruby][:nailgun]
-  include_recipe "jruby::nailgun"
-end
+include_recipe "jruby::nailgun" if node[:jruby][:nailgun]
 
 # install all gems defined in the module
 node[:jruby][:gems].each do |gem|
